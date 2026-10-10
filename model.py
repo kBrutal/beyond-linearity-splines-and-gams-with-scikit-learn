@@ -45,8 +45,25 @@ def describe_wage(df):
 
     return d
 
-# Step 2 - split_wage (not yet solved)
-# TODO: implement
+# Step 2 - split_wage
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+
+def split_wage(df, test_size=0.25, random_state=0):
+    # TODO: (train, test) DataFrames
+    df_train, df_test = train_test_split(df, test_size = test_size, random_state = random_state)
+    return (df_train, df_test)
+
+def age_xy(df):
+    # TODO: (df[['age']], df['wage'])
+    X, y = df[['age']], df['wage']
+    return (X, y)
+
+def age_grid(lo=18, hi=80, n=63):
+    # TODO: one-column DataFrame 'age' over linspace(lo, hi, n)
+    df = pd.DataFrame(np.linspace(lo, hi, n), columns = ['age'])
+    return df
 
 # Step 3 - cv_tools (not yet solved)
 # TODO: implement

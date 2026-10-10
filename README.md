@@ -11,7 +11,7 @@ python scaffold.py
 ## Steps
 
 - [x] **1.** load_wage
-- [ ] **2.** split_wage
+- [x] **2.** split_wage
 - [ ] **3.** cv_tools
 - [ ] **4.** polynomial_regression
 - [ ] **5.** step_functions
