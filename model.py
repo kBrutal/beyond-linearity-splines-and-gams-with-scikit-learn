@@ -65,8 +65,46 @@ def age_grid(lo=18, hi=80, n=63):
     df = pd.DataFrame(np.linspace(lo, hi, n), columns = ['age'])
     return df
 
-# Step 3 - cv_tools (not yet solved)
-# TODO: implement
+# Step 3 - cv_tools
+import numpy as np
+from sklearn.model_selection import cross_val_score
+
+
+def cv_mse(model, X, y, cv):
+    scores = cross_val_score(model, X, y, cv=cv, scoring = 'neg_mean_squared_error')
+    mean_score = -scores.mean()
+    std_score = scores.std()
+    return (mean_score, std_score)
+
+def cv_curve(make_model, X, y, values, cv):
+    means = []
+    stds = []
+
+    for value in values:
+        model = make_model(value)
+        mean, std = cv_mse(model, X, y, cv)
+        means.append(mean)
+        stds.append(std)
+    
+    return means, stds
+
+def one_se_rule(values, means, ses, prefer='smaller'):
+    pref_values = []
+    pref_mean = min(means)
+    for i in range(len(ses)):
+        if(means[i] == pref_mean):
+            pref_se = ses[i]
+    
+    lb = pref_mean - pref_se
+    ub = pref_mean + pref_se
+
+    for i in range(len(means)):
+        if(means[i] >= lb and means[i]<=ub):
+            pref_values.append(values[i])
+    if(prefer == "smaller"):
+        return min(pref_values)
+    else:
+        return max(pref_values)
 
 # Step 4 - polynomial_regression (not yet solved)
 # TODO: implement
