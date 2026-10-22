@@ -106,7 +106,6 @@ def one_se_rule(values, means, ses, prefer='smaller'):
 
 # Step 4 - polynomial_regression
 import numpy as np
-import requests
 from scipy.stats import f as f_dist
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
@@ -121,19 +120,56 @@ def poly_model(degree):
 
 def poly_curve(X, y, degrees, cv):
     # TODO: cv_curve over degrees
-    pass
+    means, stds = cv_curve(poly_model, X, y, degrees, cv)
+    return (means, stds)
 
 def anova_degrees(X, y, max_degree):
     # TODO: [(d, F, p)] for the nested test of degree d against d - 1, d = 2..max_degree
-    pass
+    sol = []
+    n = len(X)
+    for d in range(2, max_degree+1):
+        model_d = poly_model(d)
+        model_d_1 = poly_model(d-1)
+        model_d.fit(X, y)
+        model_d_1.fit(X, y)
+
+        pred_d = np.array(model_d.predict(X))
+        pred_d_1 = np.array(model_d_1.predict(X))
+
+        y = np.array(y)
+
+        rss_d = np.sum((y-pred_d)**2)
+        rss_d_1 = np.sum((y-pred_d_1)**2)
+
+        f = ((rss_d_1 - rss_d)*(n-d-1))/rss_d
+        p = f_dist.sf(f, 1, n-d-1)
+
+        sol.append([d, round(f, 2), round(p, 4)])
+    
+    return sol
 
 def choose_degree(X, y, degrees, cv, alpha=0.05):
     # TODO: (CV minimizer over degrees, ANOVA choice: last significant degree before the first failure)
-    pass
+    # selecting the degree with min error
+    means, _ = poly_curve(X, y, degrees, cv)
+    best_degree = degrees[np.argmin(means)]
+
+    max_degree = max(degrees)
+    anova_choice = -1
+    sol = anova_degrees(X, y, max_degree)
+
+    for d, f, p in sol:
+        if(p>=alpha):
+            anova_choice = d-1
+            break
+        
+    return (best_degree, anova_choice)
 
 def curve_on_grid(model, grid):
     # TODO: 1-D predictions on the grid rounded to 2 decimals
-    pass
+    grid = np.asarray(grid).reshape(-1, 1)
+    pred = model.predict(grid)
+    return np.round(pred, 2)
 
 # Step 5 - step_functions (not yet solved)
 # TODO: implement
