@@ -11,7 +11,6 @@ import os
 import tempfile
 import urllib.request
 import pandas as pd
-import requests
 
 WAGE_URL = "https://raw.githubusercontent.com/intro-stat-learning/ISLP/main/ISLP/data/Wage.csv"
 OUTPUT_FOLDER = tempfile.gettempdir()
@@ -19,24 +18,23 @@ FILE_NAME = "wage.csv"
 
 def load_wage():
     full_path = os.path.join(OUTPUT_FOLDER, FILE_NAME)
+
     if os.path.exists(full_path):
         df = pd.read_csv(full_path)
     else:
         try:
-            response = requests.get(WAGE_URL, timeout = 10)
-            if response.status_code == 200:
-                with open(full_path, "wb") as f:
-                    f.write(response.content)
+            urllib.request.urlretrieve(WAGE_URL, full_path)
         except Exception as e:
             print(e)
+            raise
+
         df = pd.read_csv(full_path)
+
     return df
 
+
 def describe_wage(df):
-    # TODO: {'n', 'columns', 'age_range', 'wage_mean' rounded 2, 'n_education_levels'}
     d = {}
-    full_path = os.path.join(OUTPUT_FOLDER, FILE_NAME)
-    df = pd.read_csv(full_path)
     d['n'] = df.shape[0]
     d['columns'] = df.shape[1]
     d['age_range'] = (int(df['age'].min()), int(df['age'].max()))
@@ -106,8 +104,36 @@ def one_se_rule(values, means, ses, prefer='smaller'):
     else:
         return max(pref_values)
 
-# Step 4 - polynomial_regression (not yet solved)
-# TODO: implement
+# Step 4 - polynomial_regression
+import numpy as np
+import requests
+from scipy.stats import f as f_dist
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+
+def poly_model(degree):
+    # TODO: StandardScaler -> PolynomialFeatures(degree, include_bias=False) -> LinearRegression
+    scaler = StandardScaler()
+    features = PolynomialFeatures(degree, include_bias = False)
+    model = LinearRegression()
+    return make_pipeline(scaler, features, model)
+
+def poly_curve(X, y, degrees, cv):
+    # TODO: cv_curve over degrees
+    pass
+
+def anova_degrees(X, y, max_degree):
+    # TODO: [(d, F, p)] for the nested test of degree d against d - 1, d = 2..max_degree
+    pass
+
+def choose_degree(X, y, degrees, cv, alpha=0.05):
+    # TODO: (CV minimizer over degrees, ANOVA choice: last significant degree before the first failure)
+    pass
+
+def curve_on_grid(model, grid):
+    # TODO: 1-D predictions on the grid rounded to 2 decimals
+    pass
 
 # Step 5 - step_functions (not yet solved)
 # TODO: implement
