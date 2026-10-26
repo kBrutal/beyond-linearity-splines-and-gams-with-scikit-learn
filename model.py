@@ -171,8 +171,39 @@ def curve_on_grid(model, grid):
     pred = model.predict(grid)
     return np.round(pred, 2)
 
-# Step 5 - step_functions (not yet solved)
-# TODO: implement
+# Step 5 - step_functions
+import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import KBinsDiscretizer
+
+def step_model(n_bins):
+    dis = KBinsDiscretizer(n_bins = n_bins, encode = 'onehot-dense', strategy = 'uniform')
+    lr = LinearRegression()
+    return make_pipeline(dis, lr)
+
+def step_curve(X, y, bins, cv):
+    return cv_curve(step_model, X, y, bins, cv)
+
+def choose_bins(X, y, bins, cv):
+    means, stds = step_curve(X, y, bins, cv)
+    idx_min = np.argmin(means)
+    bins_min = bins[idx_min]
+    thershold = means[idx_min] + stds[idx_min]
+    for b in bins:
+        if(means[b] <= thershold):
+            bins_1se = b
+            return (bins_min, bins_1se)
+
+def bin_edges(model):
+    discretizer = model[0]
+    edges = discretizer.bin_edges_[0]
+    return [float(x) for x in np.round(edges, 1)]
+    
+
+def step_levels(model, grid):
+    pred = model.predict(grid)
+    return np.sort(np.unique(np.round(pred, 1)))
 
 # Step 6 - spline_regression (not yet solved)
 # TODO: implement
