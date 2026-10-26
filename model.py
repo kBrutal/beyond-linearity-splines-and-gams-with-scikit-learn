@@ -205,8 +205,35 @@ def step_levels(model, grid):
     pred = model.predict(grid)
     return np.sort(np.unique(np.round(pred, 1)))
 
-# Step 6 - spline_regression (not yet solved)
-# TODO: implement
+# Step 6 - spline_regression
+import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import SplineTransformer
+
+def spline_model(n_knots, degree=3, extrapolation='constant'):
+    st = SplineTransformer(n_knots, degree, extrapolation=extrapolation, knots='quantile', include_bias = False)
+    lr = LinearRegression()
+    return make_pipeline(st, lr)
+
+def spline_basis_size(model, X):
+    model[0].fit(X)
+    return model[0].n_features_out_
+
+def spline_curve(X, y, knot_counts, cv):
+    return cv_curve(spline_model, X, y, knot_counts, cv)
+
+def choose_knots(X, y, knot_counts, cv):
+    means, stds = spline_curve(X, y, knot_counts, cv)
+    idx_min = np.argmin(means)
+    k_min = knot_counts[idx_min]
+
+    threshold = means[idx_min] + stds[idx_min]
+
+    for i in range(len(means)):
+        if(means[i]<=threshold):
+            k_1se = knot_counts[i]
+            return (k_min, k_1se)
 
 # Step 7 - extrapolation (not yet solved)
 # TODO: implement
