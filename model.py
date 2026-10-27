@@ -349,8 +349,37 @@ def choose_span(X, y, spans, cv):
 def roughness(curve):
     return round(np.mean(np.abs(np.diff(curve, n = 2))), 3)
 
-# Step 10 - gam_pipeline (not yet solved)
-# TODO: implement
+# Step 10 - gam_pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import OneHotEncoder, SplineTransformer
+
+def gam_preprocessor(age_knots=5, year_knots=4):
+    age_st = SplineTransformer(n_knots = age_knots, degree = 3, knots = 'quantile', include_bias = False)
+    year_st = SplineTransformer(n_knots = year_knots, degree = 3, knots = 'uniform', include_bias = False)
+    edu_en = OneHotEncoder(drop = 'first')
+
+    ct = ColumnTransformer(
+        transformers = [
+            ('age', age_st, ['age']),
+            ('year', year_st, ['year']),
+            ('education', edu_en, ['education'])
+        ]
+    )
+    return ct
+
+def gam_model(age_knots=5, year_knots=4):
+    pre = gam_preprocessor(age_knots=age_knots, year_knots=year_knots)
+    pipe = make_pipeline(pre, LinearRegression())
+    return pipe
+
+def gam_xy(df):
+    return (df[['age', 'year', 'education']], df['wage'])
+
+def gam_feature_count(model, X):
+    X_new = model[0].fit_transform(X)
+    return X_new.shape[1]
 
 # Step 11 - partial_effects (not yet solved)
 # TODO: implement
