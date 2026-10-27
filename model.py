@@ -305,8 +305,49 @@ def choose_alpha(X, y, alphas, cv):
 
     return (alpha_min, alpha_1se)
 
-# Step 9 - local_smoother (not yet solved)
-# TODO: implement
+# Step 9 - local_smoother
+import numpy as np
+from sklearn.neighbors import KNeighborsRegressor
+
+def local_model(span, n_train):
+    model = KNeighborsRegressor(n_neighbors = max(2, round(span*n_train)))
+    return model
+
+def local_curve(X, y, spans, cv):
+    n_train = len(X)
+    means = []
+    stds = []
+
+    for span in spans:
+        model = local_model(span, n_train)
+        mean, std = cv_mse(model, X, y, cv)
+        means.append(mean)
+        stds.append(std)
+
+    return means, stds
+
+def choose_span(X, y, spans, cv):
+    means, stds = local_curve(X, y, spans, cv)
+    idx_min = np.argmin(means)
+    span_min = spans[idx_min]
+
+    pref_values = []
+    pref_mean = min(means)
+    for i in range(len(stds)):
+        if(means[i] == pref_mean):
+            pref_se = stds[i]
+    
+    lb = pref_mean - pref_se
+    ub = pref_mean + pref_se
+
+    for i in range(len(means)):
+        if(means[i] >=lb and means[i]<=ub):
+            pref_values.append(spans[i])
+    
+    return span_min, max(pref_values)
+
+def roughness(curve):
+    return round(np.mean(np.abs(np.diff(curve, n = 2))), 3)
 
 # Step 10 - gam_pipeline (not yet solved)
 # TODO: implement
