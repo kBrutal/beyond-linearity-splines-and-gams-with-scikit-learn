@@ -264,8 +264,46 @@ def extrapolation_report(X, y, ages):
     report['poly4_range'] = round(max(poly4_preds) - min(poly4_preds), 1)
     return report
 
-# Step 8 - smoothing_spline (not yet solved)
-# TODO: implement
+# Step 8 - smoothing_spline
+import numpy as np
+from sklearn.linear_model import Ridge
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import SplineTransformer
+
+def smooth_model(alpha, n_knots=20):
+    # TODO: SplineTransformer(n_knots, degree=3, knots='quantile', include_bias=False) -> Ridge(alpha)
+    st = SplineTransformer(n_knots, degree=3, knots = 'quantile', include_bias = False)
+    ridge = Ridge(alpha = alpha)
+    return make_pipeline(st, ridge)
+
+def effective_df(model, X):
+    # TODO: 1 + trace((B^T B + alpha I)^-1 B^T B) on the centered basis, rounded to 2 decimals
+    scaler = StandardScaler(with_mean = True, with_std = False)
+    pipe = make_pipeline(model[0], scaler)
+    B = pipe.fit_transform(X)
+    B_t = np.transpose(B)
+
+    t1 = np.matmul(B_t, B)
+    alpha = model[1].alpha
+    I = np.eye(t1.shape[0])
+    t2 = t1 + alpha*I
+
+    t2_inv = np.linalg.inv(t2)
+    mat = np.matmul(t2_inv, t1)
+
+    trace = np.linalg.trace(mat)
+    return round(1+trace, 2)
+
+def smooth_curve(X, y, alphas, cv):
+    return cv_curve(smooth_model, X, y, alphas, cv)
+
+def choose_alpha(X, y, alphas, cv):
+    means, stds = smooth_curve(X, y, alphas, cv)
+    min_idx = np.argmin(means)
+    alpha_min = alphas[min_idx]
+    alpha_1se = one_se_rule(alphas, means, stds, prefer="larger")
+
+    return (alpha_min, alpha_1se)
 
 # Step 9 - local_smoother (not yet solved)
 # TODO: implement
